@@ -6,7 +6,7 @@ variables:
   benchmarkingImageName: testouilleBenchmarking
 
 trigger:
-- feature-nonematch-evaluator
+- feature-azure-pipeline
 
 pool:
   vmImage: "ubuntu-16.04"
