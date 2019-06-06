@@ -1,9 +1,9 @@
 variables:
-  backendImageName: testouilleBackend
-  frontendImageName: testouilleFrontend
-  docsImageName: testouilleDocs
-  tutorialImageName: testouilleTutorial
-  benchmarkingImageName: testouilleBenchmarking
+  backendImageName: testouillebackend
+  frontendImageName: testouillefrontend
+  docsImageName: testouilledocs
+  tutorialImageName: testouilletutorial
+  benchmarkingImageName: testouillebenchmarking
 
 trigger:
 - feature-azure-pipeline
