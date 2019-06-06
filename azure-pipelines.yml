@@ -1,0 +1,41 @@
+variables:
+  backendImageName: testouilleBackend
+  frontendImageName: testouilleFrontend
+  docsImageName: testouilleDocs
+  tutorialImageName: testouilleTutorial
+  benchmarkingImageName: testouilleBenchmarking
+
+trigger:
+- feature-nonematch-evaluator
+
+pool:
+  vmImage: "ubuntu-16.04"
+
+stages:
+- stage: DockerBuilds
+  displayName: Docker Builds
+  jobs:
+  - job: backendBuild
+    steps:
+    - script: docker build -t $(backendImageName) ./backend
+  - job: backendBuild
+    steps:
+    - script: docker build -t $(frontendImageName) ./frontend
+  - job: backendBuild
+    steps:
+    - script: docker build -t $(docsImageName) ./docs
+  - job: backendBuild
+    steps:
+    - script: docker build -t $(tutorialImageName) ./docs/tutorial
+  - job: backendBuild
+    steps:
+    - script: docker build -t $(benchmarkingImageName) ./benchmarking
+    
+
+#- stage: DockerCompose
+#  displayName: Test deployment
+#  dependsOn: DockerBuilds
+#  condition: succeeded('DockerBuilds')
+#  jobs:
+#  - job: dockerComposeversion
+  
