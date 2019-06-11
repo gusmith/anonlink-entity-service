@@ -1,9 +1,9 @@
 variables:
-  backendImageName: testouillebackend
-  frontendImageName: testouillefrontend
-  docsImageName: testouilledocs
-  tutorialImageName: testouilletutorial
-  benchmarkingImageName: testouillebenchmarking
+  backendImageName: data61/anonlink-entity-service-backend
+  frontendImageName: data61/anonlink-entity-service-frontend
+  docsImageName: data61/anonlink-entity-service-docs
+  tutorialImageName: data61/anonlink-entity-service-tutorial
+  benchmarkingImageName: data61/anonlink-entity-service-benchmarking
 
 trigger:
 - feature-azure-pipeline
@@ -12,11 +12,11 @@ pool:
   vmImage: "ubuntu-16.04"
 
 steps:
-- script: docker build -t $(backendImageName) ./backend
-- script: docker build -t $(frontendImageName) ./frontend
-- script: docker build -t $(docsImageName) ./docs
-- script: docker build -t $(tutorialImageName) ./docs/tutorial
-- script: docker build -t $(benchmarkingImageName) ./benchmarking
+- script: docker build -t $(backendImageName)-$(Build.BuildID) ./backend
+- script: docker build -t $(frontendImageName)-$(Build.BuildID) ./frontend
+- script: docker build -t $(docsImageName)-$(Build.BuildID) ./docs
+- script: docker build -t $(tutorialImageName)-$(Build.BuildID) ./docs/tutorial
+- script: docker build -t $(benchmarkingImageName)-$(Build.BuildID) ./benchmarking
     
 
 #- stage: DockerCompose
