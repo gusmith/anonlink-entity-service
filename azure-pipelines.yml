@@ -1,9 +1,9 @@
 variables:
-  backendImageName: quay.io/anonlink-test #data61/anonlink-entity-service-backend
-  frontendImageName: quay.io/anonlink-test #data61/anonlink-entity-service-frontend
+  backendImageName: quay.io/anonlink-test #data61/anonlink-app
+  frontendImageName: data61/anonlink-nginx
   docsImageName: quay.io/anonlink-test #data61/anonlink-entity-service-docs
   tutorialImageName: quay.io/anonlink-test #data61/anonlink-entity-service-tutorial
-  benchmarkingImageName: quay.io/anonlink-test #data61/anonlink-entity-service-benchmarking
+  benchmarkingImageName: quay.io/anonlink-test #data61/anonlink-benchmarking
 
 trigger:
 - feature-azure-pipeline
@@ -16,15 +16,19 @@ steps:
     echo "$(Build.BuildID)$(Build.SourceBranch)" | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
     echo "$(Build.BuildID)$(Build.SourceBranch)"
 - script: |
+    docker login -u $(dockerHubId) -p $(dockerHubPassword)
+- script: |
     docker build -t $(backendImageName):$(dockertag) ./backend
-#- bash: |
-#    docker build -t $(frontendImageName):$dockertag ./frontend
-#- bash: |  
-#    docker build -t $(docsImageName):$dockertag ./docs
-#- bash: |
-#    docker build -t $(tutorialImageName):$dockertag ./docs/tutorial
-#- bash: |
-#    docker build -t $(benchmarkingImageName):$dockertag ./benchmarking
+    docker push $(backendImageName):$(dockertag)
+    
+#- script: |
+#    docker build -t $(frontendImageName):$(dockertag) ./frontend
+#- script: |  
+#    docker build -t $(docsImageName):$(dockertag) ./docs
+#- script: |
+#    docker build -t $(tutorialImageName):$(dockertag) ./docs/tutorial
+#- script: |
+#    docker build -t $(benchmarkingImageName):$(dockertag) ./benchmarking
     
 
 #- stage: DockerCompose
