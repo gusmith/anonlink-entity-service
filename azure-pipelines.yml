@@ -13,10 +13,10 @@ pool:
 
 steps:
 - bash: |
-    tag = echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z]
+    tag = $(echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z])
     docker build -t $(backendImageName):$tag ./backend
 - bash: |
-    tag = echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z]   
+    tag = $(echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z])
     docker build -t $(frontendImageName):$tag ./frontend
 #- bash: |
 #    tag = echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z]   
@@ -25,7 +25,7 @@ steps:
 #    tag = echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z]
 #    docker build -t $(tutorialImageName):$tag ./docs/tutorial
 - bash: |
-    tag = echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z]
+    tag = $(echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z])
     docker build -t $(benchmarkingImageName):$tag ./benchmarking
     
 
