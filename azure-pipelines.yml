@@ -1,9 +1,9 @@
 variables:
-  backendImageName: data61/anonlink-entity-service-backend
-  frontendImageName: data61/anonlink-entity-service-frontend
-  docsImageName: data61/anonlink-entity-service-docs
-  tutorialImageName: data61/anonlink-entity-service-tutorial
-  benchmarkingImageName: data61/anonlink-entity-service-benchmarking
+  backendImageName: quay.io/anonlink-test #data61/anonlink-entity-service-backend
+  frontendImageName: quay.io/anonlink-test #data61/anonlink-entity-service-frontend
+  docsImageName: quay.io/anonlink-test #data61/anonlink-entity-service-docs
+  tutorialImageName: quay.io/anonlink-test #data61/anonlink-entity-service-tutorial
+  benchmarkingImageName: quay.io/anonlink-test #data61/anonlink-entity-service-benchmarking
 
 trigger:
 - feature-azure-pipeline
@@ -12,11 +12,21 @@ pool:
   vmImage: "ubuntu-16.04"
 
 steps:
-- script: docker build -t $(backendImageName):$(Build.BuildID) ./backend
-- script: docker build -t $(frontendImageName):$(Build.BuildID) ./frontend
-- script: docker build -t $(docsImageName):$(Build.BuildID) ./docs
-- script: docker build -t $(tutorialImageName):$(Build.BuildID) ./docs/tutorial
-- script: docker build -t $(benchmarkingImageName):$(Build.BuildID) ./benchmarking
+- bash: |
+    tag = echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z]
+    docker build -t $(backendImageName):$tag ./backend
+- bash: |
+    tag = echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z]   
+    docker build -t $(frontendImageName):$tag ./frontend
+#- bash: |
+#    tag = echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z]   
+#    docker build -t $(docsImageName):$tag ./docs
+#- bash: |
+#    tag = echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z]
+#    docker build -t $(tutorialImageName):$tag ./docs/tutorial
+- bash: |
+    tag = echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z]
+    docker build -t $(benchmarkingImageName):$tag ./benchmarking
     
 
 #- stage: DockerCompose
