@@ -12,11 +12,11 @@ pool:
   vmImage: "ubuntu-16.04"
 
 steps:
-- script: docker build -t $(backendImageName)-$(Build.BuildID) ./backend
-- script: docker build -t $(frontendImageName)-$(Build.BuildID) ./frontend
-- script: docker build -t $(docsImageName)-$(Build.BuildID) ./docs
-- script: docker build -t $(tutorialImageName)-$(Build.BuildID) ./docs/tutorial
-- script: docker build -t $(benchmarkingImageName)-$(Build.BuildID) ./benchmarking
+- script: docker build -t $(backendImageName):$(Build.BuildID) ./backend
+- script: docker build -t $(frontendImageName):$(Build.BuildID) ./frontend
+- script: docker build -t $(docsImageName):$(Build.BuildID) ./docs
+- script: docker build -t $(tutorialImageName):$(Build.BuildID) ./docs/tutorial
+- script: docker build -t $(benchmarkingImageName):$(Build.BuildID) ./benchmarking
     
 
 #- stage: DockerCompose
