@@ -20,7 +20,6 @@ steps:
 - script: |
     docker build -t $(backendImageName):$(dockertag) ./backend
     docker push $(backendImageName):$(dockertag)
-    
 #- script: |
 #    docker build -t $(frontendImageName):$(dockertag) ./frontend
 #- script: |  
