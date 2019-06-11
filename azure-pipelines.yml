@@ -15,7 +15,8 @@ steps:
 - script: |
     echo "$(Build.BuildID)$(Build.SourceBranch)" | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
     echo "$(Build.BuildID)$(Build.SourceBranch)"
-- script: docker build -t $(backendImageName):$dockertag ./backend
+- script: |
+    docker build -t $(backendImageName):$(dockertag) ./backend
 #- bash: |
 #    docker build -t $(frontendImageName):$dockertag ./frontend
 #- bash: |  
