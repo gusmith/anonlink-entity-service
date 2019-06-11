@@ -12,21 +12,17 @@ pool:
   vmImage: "ubuntu-16.04"
 
 steps:
+- script: echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
 - bash: |
-    tag = $(echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z])
-    docker build -t $(backendImageName):$tag ./backend
-- bash: |
-    tag = $(echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z])
-    docker build -t $(frontendImageName):$tag ./frontend
+    docker build -t $(backendImageName):$dockertag ./backend
 #- bash: |
-#    tag = echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z]   
-#    docker build -t $(docsImageName):$tag ./docs
+#    docker build -t $(frontendImageName):$dockertag ./frontend
+#- bash: |  
+#    docker build -t $(docsImageName):$dockertag ./docs
 #- bash: |
-#    tag = echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z]
-#    docker build -t $(tutorialImageName):$tag ./docs/tutorial
-- bash: |
-    tag = $(echo $(Build.SourceBranch) | tr [:upper:] [:lower:] | tr -d -c [a-z])
-    docker build -t $(benchmarkingImageName):$tag ./benchmarking
+#    docker build -t $(tutorialImageName):$dockertag ./docs/tutorial
+#- bash: |
+#    docker build -t $(benchmarkingImageName):$dockertag ./benchmarking
     
 
 #- stage: DockerCompose
