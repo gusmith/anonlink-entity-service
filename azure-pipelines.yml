@@ -9,49 +9,42 @@ trigger:
 - feature-azure-pipeline
 
 
-jobs:
-- template: .azurePipeline/templateDockerBuildPush.yml
-  parameters:
-    folder: './frontend'
-    imageName: data61/anonlink-nginx
-    jobName: 'anonlink_nginx'
-- template: .azurePipeline/templateDockerBuildPush.yml
-  parameters:
-    folder: './backend'
-    imageName: data61/anonlink-app
-    jobName: 'anonlink_app'
-- template: .azurePipeline/templateDockerBuildPush.yml
-  parameters:
-    folder: './benchmarking'
-    imageName: data61/anonlink-benchmark
-    jobName: 'anonlink_benchmark'
-#pool:
-#  vmImage: "ubuntu-16.04"
+stages:
+- stage: stage_docker_image_build
+  displayName: Build docker images
+  jobs:
+  - template: .azurePipeline/templateDockerBuildPush.yml
+    parameters:
+      folder: './frontend'
+      imageName: data61/anonlink-nginx
+      jobName: 'anonlink_nginx'
+  - template: .azurePipeline/templateDockerBuildPush.yml
+    parameters:
+      folder: './backend'
+      imageName: data61/anonlink-app
+      jobName: 'anonlink_app'
+  #- template: .azurePipeline/templateDockerBuildPush.yml
+  #  parameters:
+  #    folder: './benchmarking'
+  #    imageName: data61/anonlink-benchmark
+  #    jobName: 'anonlink_benchmark'
 
-#steps:
-#- script: |
-#    sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
-#    sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/}
-#- script: |
-#    docker login -u $(dockerHubId) -p $(dockerHubPassword)
-#- script: |
-#    docker build -t $(backendImageName):$(dockertag) ./backend
-#    docker push $(backendImageName):$(dockertag)
-#- script: |
-#    docker build -t $(frontendImageName):$(dockertag) ./frontend
-#    docker push $(frontendImageName):$(dockertag)
-#- script: |  
-#    docker build -t $(docsImageName):$(dockertag) ./docs
-#- script: |
-#    docker build -t $(tutorialImageName):$(dockertag) ./docs/tutorial
-#- script: |
-#    docker build -t $(benchmarkingImageName):$(dockertag) ./benchmarking
-    
-
-#- stage: DockerCompose
-#  displayName: Test deployment
-#  dependsOn: DockerBuilds
-#  condition: succeeded('DockerBuilds')
-#  jobs:
-#  - job: dockerComposeversion
+-stage: stage_integration_tests
+  displayName: Integration tests
+  timeoutInMinutes: 10
+  dependsOn: [stage_docker_image_build]
+  jobs:
+  - job: integration_test
+    variables:
+     commandPrefix: docker-compose --no-ansi -f tools/docker-compose.yml --project-directory . 
+    displayName: Integration tests
+    pool:
+      vmImage: 'ubuntu-16.04'
+    steps:
+    - script: |
+      sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
+    - script: |
+      $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up -d db minio redis backend db_init worker nginx tests
+      docker wait es$(dockertag)$(Build.BuildNumber)_tests_1
+      $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
   

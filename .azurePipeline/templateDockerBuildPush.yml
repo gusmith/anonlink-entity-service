@@ -8,14 +8,12 @@ parameters:
 
 jobs:
 - job: Docker_${{ parameters.jobName }}
-
   pool:
     vmImage: "ubuntu-16.04"
 
   steps:
   - script: |
       sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
-      sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/}
   - script: |
       docker login -u $(dockerHubId) -p $(dockerHubPassword)
   - script: |
