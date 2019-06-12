@@ -13,5 +13,5 @@ steps:
 - script: |
     docker login -u $(dockerHubId) -p $(dockerHubPassword)
 - script: |
-    docker build -t $(imageName):$(imageTag) $(folder)
-    docker push $(imageName):$(imageTag)
+    docker build -t ${{ parameters.imageName }}:$(dockertag) ${{ parameters.folder }}
+    docker push ${{ parameters.imageName }}:$(dockertag)
