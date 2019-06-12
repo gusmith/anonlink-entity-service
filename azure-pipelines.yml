@@ -11,7 +11,7 @@ trigger:
 
 jobs:
 - template: .azurePipeline/templateDockerBuildPush.yml
-  paramaters:
+  parameters:
     folder: './frontend'
     imageName: frontendImageName
 #pool:
