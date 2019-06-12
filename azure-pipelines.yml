@@ -13,8 +13,8 @@ pool:
 
 steps:
 - script: |
-    echo "$(Build.BuildID)$(Build.SourceBranch)" | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
-    echo "$(Build.BuildID)$(Build.SourceBranch)"
+    sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
+    sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/}
 - script: |
     docker login -u $(dockerHubId) -p $(dockerHubPassword)
 #- script: |
