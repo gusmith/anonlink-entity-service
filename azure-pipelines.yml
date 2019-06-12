@@ -13,7 +13,7 @@ jobs:
 - template: .azurePipeline/templateDockerBuildPush.yml
   parameters:
     folder: './frontend'
-    imageName: frontendImageName
+    imageName: $(frontendImageName)
 #pool:
 #  vmImage: "ubuntu-16.04"
 
