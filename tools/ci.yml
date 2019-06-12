@@ -1,9 +1,9 @@
-version: '2.1'
+version: '3.4'
 services:
 
 
   tests:
-    image: quay.io/n1analytics/entity-app
+    image: data61/entity-app:${TAG:-latest}
     environment:
       - ENTITY_SERVICE_URL=http://nginx:8851/api/v1
       - INITIAL_DELAY=20

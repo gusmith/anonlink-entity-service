@@ -42,9 +42,11 @@ stages:
       vmImage: 'ubuntu-16.04'
     steps:
     - script: |
-      sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
+        sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
     - script: |
-      $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up -d db minio redis backend db_init worker nginx tests
-      docker wait es$(dockertag)$(Build.BuildNumber)_tests_1
-      $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
+        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up -d db minio redis backend db_init worker nginx tests
+        docker wait es$(dockertag)$(Build.BuildNumber)_tests_1
+        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
+      env:
+        TAG: $(dockertag)
   
