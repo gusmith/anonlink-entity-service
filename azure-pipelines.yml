@@ -36,7 +36,7 @@ stages:
   - job: integration_test
     timeoutInMinutes: 10
     variables:
-     commandPrefix: docker-compose --no-ansi -f tools/docker-compose.yml --project-directory . 
+     commandPrefix: docker-compose -f tools/docker-compose.yml -f tools/ci.yml --project-directory . 
     displayName: Integration tests
     pool:
       vmImage: 'ubuntu-16.04'
@@ -44,9 +44,18 @@ stages:
     - script: |
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
     - script: |
-        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up -d db minio redis backend db_init worker nginx tests
-        docker wait es$(dockertag)$(Build.BuildNumber)_tests_1
-        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
+        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up db_init > /dev/null 2>&1
+        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up --abort-on-container-exit --exit-code-from tests db minio redis backend worker nginx tests
       env:
         TAG: $(dockertag)
-  
+
+#- stage: benchmark
+#  displayName: benchmark
+#  jobs:
+#  - template: .azurePipeline/templateDockerBuildPush.yml
+#    parameters:
+#      folder: './benchmarking'
+#      imageName: data61/anonlink-benchmark
+#      jobName: 'anonlink_benchmark'
+#  - job: benchmark
+#    dependsOn: [stage_docker_image_build, stage_integration_tests]
