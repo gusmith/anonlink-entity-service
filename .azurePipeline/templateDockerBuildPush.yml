@@ -7,7 +7,7 @@ parameters:
   jobName: ''
 
 jobs:
-- job: Docker_${{ jobName }}
+- job: Docker_${{ parameters.jobName }}
 
   pool:
     vmImage: "ubuntu-16.04"
