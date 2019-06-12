@@ -31,10 +31,10 @@ stages:
 
 - stage: stage_integration_tests
   displayName: Integration tests
-  timeoutInMinutes: 10
   dependsOn: [stage_docker_image_build]
   jobs:
   - job: integration_test
+    timeoutInMinutes: 10
     variables:
      commandPrefix: docker-compose --no-ansi -f tools/docker-compose.yml --project-directory . 
     displayName: Integration tests
