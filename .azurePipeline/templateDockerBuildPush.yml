@@ -3,9 +3,11 @@
 parameters:
   folder: ''
   imageName: ''
+#jobName should only include alphanumeric values and '_'.
+  jobName: ''
 
 jobs:
-- job: Docker_Build_Push
+- job: Docker_${{ jobName }}
 
   pool:
     vmImage: "ubuntu-16.04"

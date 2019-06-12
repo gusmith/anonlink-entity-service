@@ -14,10 +14,12 @@ jobs:
   parameters:
     folder: './frontend'
     imageName: data61/anonlink-nginx
+    jobName: 'anonlink_nginx'
 - template: .azurePipeline/templateDockerBuildPush.yml
   parameters:
     folder: './backend'
     imageName: data61/anonlink-app
+    jobName: 'anonlink_app'
 #pool:
 #  vmImage: "ubuntu-16.04"
 
