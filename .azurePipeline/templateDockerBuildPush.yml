@@ -1,9 +1,9 @@
 # Template to login into dockerhub, build a docker image and push it.
 
+#jobName should only include alphanumeric values and '_'.
 parameters:
   folder: ''
   imageName: ''
-#jobName should only include alphanumeric values and '_'.
   jobName: ''
 
 jobs:
