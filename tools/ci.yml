@@ -3,11 +3,11 @@ services:
 
 
   tests:
-    image: data61/entity-app:${TAG:-latest}
+    image: data61/anonlink-app:${TAG:-latest}
     environment:
       - ENTITY_SERVICE_URL=http://nginx:8851/api/v1
       - INITIAL_DELAY=20
-    entrypoint: /bin/sh -c "sleep 20; python -m pytest entityservice/tests -x"
+    entrypoint: /bin/sh -c "wait4ports nginx:8851 ; python -m pytest entityservice/tests -x"
     depends_on:
       - db
       - redis
