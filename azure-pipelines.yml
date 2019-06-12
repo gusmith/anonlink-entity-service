@@ -20,6 +20,11 @@ jobs:
     folder: './backend'
     imageName: data61/anonlink-app
     jobName: 'anonlink_app'
+- template: .azurePipeline/templateDockerBuildPush.yml
+  parameters:
+    folder: './benchmarking'
+    imageName: data61/anonlink-benchmark
+    jobName: 'anonlink_benchmark'
 #pool:
 #  vmImage: "ubuntu-16.04"
 
