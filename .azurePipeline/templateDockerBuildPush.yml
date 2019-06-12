@@ -1,17 +1,21 @@
 # Template to login into dockerhub, build a docker image and push it.
+
 parameters:
   folder: ''
   imageName: ''
-  
-pool:
-  vmImage: "ubuntu-16.04"
 
-steps:
-- script: |
-    sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
-    sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/}
-- script: |
-    docker login -u $(dockerHubId) -p $(dockerHubPassword)
-- script: |
-    docker build -t ${{ parameters.imageName }}:$(dockertag) ${{ parameters.folder }}
-    docker push ${{ parameters.imageName }}:$(dockertag)
+jobs:
+- job: Docker build and push $(imageName)
+
+  pool:
+    vmImage: "ubuntu-16.04"
+
+  steps:
+  - script: |
+      sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
+      sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/}
+  - script: |
+      docker login -u $(dockerHubId) -p $(dockerHubPassword)
+  - script: |
+      docker build -t ${{ parameters.imageName }}:$(dockertag) ${{ parameters.folder }}
+      docker push ${{ parameters.imageName }}:$(dockertag)
