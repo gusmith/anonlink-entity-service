@@ -63,7 +63,9 @@ stages:
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
     - script: |
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up db_init > /dev/null 2>&1
+    - script: |
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up --abort-on-container-exit --exit-code-from tests db minio redis backend worker nginx tests
+    - script: |
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
       env:
         TAG: $(dockertag)
@@ -88,9 +90,11 @@ stages:
               -v linkage-benchmark-data:/data busybox \
               sh -c "cp -r /src/benchmarking/linkage-bench-cache-experiments.json /data; chown -R 1000:1000 /data"
     - script: |
-        echo "Starting benchmarks"
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up db_init > /dev/null 2>&1
+    - script: |
+        echo "Starting benchmarks"
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up --abort-on-container-exit --exit-code-from benchmark db minio redis backend worker nginx benchmark
+    - script: |
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
       env:
         TAG: $(dockertag)
