@@ -25,7 +25,7 @@ stages:
 #      imageName: data61/anonlink-app
 #      jobName: 'anonlink_app'
   - script: |
-    echo "Done Building Images."
+      echo "Done Building Images."
       
 - stage: stage_benchmark_image_build
   displayName: Build benchmark images
@@ -37,7 +37,7 @@ stages:
 #      imageName: data61/anonlink-benchmark
 #      jobName: 'anonlink_benchmark'
   - script: |
-    echo "Done Building Images."
+      echo "Done Building Images."
 
 - stage: stage_integration_tests
   displayName: Integration tests
