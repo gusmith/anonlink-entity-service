@@ -68,7 +68,7 @@ stages:
           commandPrefix: docker-compose -f tools/docker-compose.yml -f tools/ci.yml --project-directory .
         steps:
         - script: |
-          sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
+            sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
         - script: |
             ./tools/create-benchmark-cache.sh
             echo "Copying experiments into cache volume"
