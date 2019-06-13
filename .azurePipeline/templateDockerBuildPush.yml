@@ -5,9 +5,11 @@ parameters:
   folder: ''
   imageName: ''
   jobName: ''
+  extraJobs: []
 
 jobs:
-- job: Docker_${{ parameters.jobName }}
+- job: ${{ jobName }}
+  displayName: Building ${{ parameters.imageName }}
   pool:
     vmImage: "ubuntu-16.04"
 
@@ -19,3 +21,14 @@ jobs:
   - script: |
       docker build -t ${{ parameters.imageName }}:$(dockertag) ${{ parameters.folder }}
       docker push ${{ parameters.imageName }}:$(dockertag)
+      
+# Updated from the documentation https://docs.microsoft.com/en-us/azure/devops/pipelines/process/templates?view=azure-devops
+# The idea being able to define jobs depending on the creation of the previous image.
+- ${{ each job in parameters.jobs }}: # Then do each job
+  - ${{ each pair in job }}:          # Insert all properties other than "dependsOn"
+      ${{ if ne(pair.key, 'dependsOn') }}:
+        ${{ pair.key }}: ${{ pair.value }}
+    dependsOn:                        # Inject dependency
+    - ${{ jobName }}
+    - ${{ if job.dependsOn }}:
+      - ${{ job.dependsOn }}
