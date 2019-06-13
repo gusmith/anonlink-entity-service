@@ -13,3 +13,17 @@ services:
       - redis
       - worker
       - nginx
+      
+  benchmark:
+    image: data61/anonlink-benchmark:${TAG:-latest}
+    environment:
+      - SERVER=http://nginx:8851
+      - DATA_PATH=/cache
+      - EXPERIMENT=/cache/linkage-bench-cache-experiments.json
+      - RESULTS_PATH=/app/results.json
+    entrypoint: 
+    depends_on:
+      - db
+      - redis
+      - worker
+      - nginx
