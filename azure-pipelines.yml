@@ -9,11 +9,11 @@ trigger:
 - feature-azure-pipeline
 
 
-stages:
-- stage: stage_docker_image_build
-  displayName: Build docker images
-  dependsOn: []
-  jobs:
+#stages:
+#- stage: stage_docker_image_build
+#  displayName: Build docker images
+#  dependsOn: []
+#  jobs:
 #  - template: .azurePipeline/templateDockerBuildPush.yml
 #    parameters:
 #      folder: './frontend'
@@ -24,32 +24,21 @@ stages:
 #      folder: './backend'
 #      imageName: data61/anonlink-app
 #      jobName: 'anonlink_app'
-  - job:
-    pool:
-      vmImage: 'ubuntu-16.04'
-    steps:
-    - script: |
-        echo "Done Building Images."
       
-- stage: stage_benchmark_image_build
-  displayName: Build benchmark images
-  dependsOn: []
-  jobs:
+#- stage: stage_benchmark_image_build
+#  displayName: Build benchmark images
+#  dependsOn: []
+#  jobs:
 #  - template: .azurePipeline/templateDockerBuildPush.yml
 #    parameters:
 #      folder: './benchmarking'
 #      imageName: data61/anonlink-benchmark
 #      jobName: 'anonlink_benchmark'
-  - job:
-    pool:
-      vmImage: 'ubuntu-16.04'
-    steps:
-    - script: |
-        echo "Done Building Images."
 
 - stage: stage_integration_tests
   displayName: Integration tests
-  dependsOn: [stage_docker_image_build]
+#  dependsOn: [stage_docker_image_build]
+  dependsOn: []
   jobs:
   - job: integration_test
     timeoutInMinutes: 10
@@ -76,9 +65,10 @@ stages:
 
 - stage: benchmark
   displayName: benchmark
-  dependsOn: 
-  - stage_docker_image_build
-  - stage_benchmark_image_build
+#  dependsOn: 
+#  - stage_docker_image_build
+#  - stage_benchmark_image_build
+  dependsOn: []
   jobs:
   - job: benchmark
     timeoutInMinutes: 15
@@ -92,7 +82,8 @@ stages:
         echo "Copying experiments into cache volume"
         ls
         ls benchmarking/
-        docker run --rm -v ${pwd}:/src -v linkage-benchmark-data:/data busybox sh -c "cp -r /src/benchmarking/linkage-bench-cache-experiments.json /data; chown -R 1000:1000 /data"
+        echo ${pwd}
+        docker run --rm -v ${pwd}:/src -v linkage-benchmark-data:/data busybox sh -c "ls src; cp -r /src/benchmarking/linkage-bench-cache-experiments.json /data; chown -R 1000:1000 /data"
     - script: |
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up db_init > /dev/null 2>&1
       env:
