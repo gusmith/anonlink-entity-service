@@ -92,3 +92,5 @@ stages:
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up db_init > /dev/null 2>&1
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up --abort-on-container-exit --exit-code-from benchmark db minio redis backend worker nginx benchmark
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
+      env:
+        TAG: $(dockertag)
