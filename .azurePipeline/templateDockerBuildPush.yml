@@ -29,6 +29,6 @@ jobs:
       ${{ if ne(pair.key, 'dependsOn') }}:
         ${{ pair.key }}: ${{ pair.value }}
     dependsOn:                        # Inject dependency
-    - ${{ jobName }}
+    - ${{ parameters.jobName }}
     - ${{ if job.dependsOn }}:
       - ${{ job.dependsOn }}
