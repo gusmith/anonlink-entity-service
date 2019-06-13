@@ -23,7 +23,7 @@ services:
       - RESULTS_PATH=/app/results.json
     volumes:
       - type: bind
-        source: linkage-benchmark-data
+        source: ./linkage-benchmark-data
         target: /cache
     depends_on:
       - db
