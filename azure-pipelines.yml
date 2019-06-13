@@ -69,7 +69,7 @@ stages:
         steps:
         - script: |
           sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
-        - bash: |
+        - script: |
             ./tools/create-benchmark-cache.sh
             echo "Copying experiments into cache volume"
             docker run --rm -v `pwd`:/src \
