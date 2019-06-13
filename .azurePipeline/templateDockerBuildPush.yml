@@ -8,7 +8,7 @@ parameters:
   extraJobs: []
 
 jobs:
-- job: ${{ jobName }}
+- job: ${{ parameters.jobName }}
   displayName: Building ${{ parameters.imageName }}
   pool:
     vmImage: "ubuntu-16.04"
