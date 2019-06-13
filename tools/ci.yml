@@ -22,11 +22,12 @@ services:
       - EXPERIMENT=/cache/linkage-bench-cache-experiments.json
       - RESULTS_PATH=/app/results.json
     volumes:
-      - type: bind
-        source: ./linkage-benchmark-data
-        target: /cache
+      - linkage-benchmark-data:/cache
     depends_on:
       - db
       - redis
       - worker
       - nginx
+      
+volumes:
+  linkage-benchmark-data:

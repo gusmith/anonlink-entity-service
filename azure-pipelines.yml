@@ -83,8 +83,8 @@ stages:
     steps:
     - script: |
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
+    - bash: ./tools/create-benchmark-cache.sh
     - script: |
-        ./tools/create-benchmark-cache.sh
         echo "Copying experiments into cache volume"
         docker run --rm -v `pwd`:/src \
               -v linkage-benchmark-data:/data busybox \
