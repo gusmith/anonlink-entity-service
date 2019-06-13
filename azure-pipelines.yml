@@ -61,8 +61,8 @@ stages:
       jobs:
       - job: benchmark
         dependsOn:
-        - stage_docker_image_build
-        - stage_integration_tests
+        - anonlink_nginx
+        - anonlink_app
         timeoutInMinutes: 15
         variables:
           commandPrefix: docker-compose -f tools/docker-compose.yml -f tools/ci.yml --project-directory .
