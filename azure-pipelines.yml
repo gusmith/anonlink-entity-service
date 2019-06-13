@@ -12,6 +12,7 @@ trigger:
 stages:
 - stage: stage_docker_image_build
   displayName: Build docker images
+  dependsOn: []
   jobs:
   - template: .azurePipeline/templateDockerBuildPush.yml
     parameters:
@@ -26,6 +27,7 @@ stages:
       
 - stage: stage_benchmark_image_build
   displayName: Build benchmark images
+  dependsOn: []
   jobs:
   - template: .azurePipeline/templateDockerBuildPush.yml
     parameters:
