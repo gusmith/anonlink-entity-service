@@ -17,10 +17,10 @@ services:
   benchmark:
     image: data61/anonlink-benchmark:${TAG:-latest}
     environment:
-      - SERVER=http://nginx:8851
-      - DATA_PATH=/cache
-      - EXPERIMENT=/cache/linkage-bench-cache-experiments.json
-      - RESULTS_PATH=/app/results.json
+      - SERVER="http://nginx:8851"
+      - DATA_PATH="/cache"
+      - EXPERIMENT="/cache/linkage-bench-cache-experiments.json"
+      - RESULTS_PATH="/app/results.json"
     volumes:
       - linkage-benchmark-data:/cache
     depends_on:
