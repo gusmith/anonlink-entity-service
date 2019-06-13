@@ -21,7 +21,10 @@ services:
       - DATA_PATH=/cache
       - EXPERIMENT=/cache/linkage-bench-cache-experiments.json
       - RESULTS_PATH=/app/results.json
-    entrypoint: 
+    volumes:
+      - type: bind
+        source: linkage-benchmark-data
+        target: /cache
     depends_on:
       - db
       - redis
