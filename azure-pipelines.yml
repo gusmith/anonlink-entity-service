@@ -14,26 +14,30 @@ stages:
   displayName: Build docker images
   dependsOn: []
   jobs:
-  - template: .azurePipeline/templateDockerBuildPush.yml
-    parameters:
-      folder: './frontend'
-      imageName: data61/anonlink-nginx
-      jobName: 'anonlink_nginx'
-  - template: .azurePipeline/templateDockerBuildPush.yml
-    parameters:
-      folder: './backend'
-      imageName: data61/anonlink-app
-      jobName: 'anonlink_app'
+#  - template: .azurePipeline/templateDockerBuildPush.yml
+#    parameters:
+#      folder: './frontend'
+#      imageName: data61/anonlink-nginx
+#      jobName: 'anonlink_nginx'
+#  - template: .azurePipeline/templateDockerBuildPush.yml
+#    parameters:
+#      folder: './backend'
+#      imageName: data61/anonlink-app
+#      jobName: 'anonlink_app'
+  - script: |
+    echo "Done Building Images."
       
 - stage: stage_benchmark_image_build
   displayName: Build benchmark images
   dependsOn: []
   jobs:
-  - template: .azurePipeline/templateDockerBuildPush.yml
-    parameters:
-      folder: './benchmarking'
-      imageName: data61/anonlink-benchmark
-      jobName: 'anonlink_benchmark'
+#  - template: .azurePipeline/templateDockerBuildPush.yml
+#    parameters:
+#      folder: './benchmarking'
+#      imageName: data61/anonlink-benchmark
+#      jobName: 'anonlink_benchmark'
+  - script: |
+    echo "Done Building Images."
 
 - stage: stage_integration_tests
   displayName: Integration tests
