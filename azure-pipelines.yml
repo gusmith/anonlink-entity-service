@@ -86,7 +86,7 @@ stages:
         echo "Copying experiments into cache volume"
         docker run --rm -v `pwd`:/src \
               -v linkage-benchmark-data:/data busybox \
-              sh -c "cp -r /src/becnhmarking/linkage-bench-cache-experiments.json /data; chown -R 1000:1000 /data"
+              sh -c "cp -r /src/benchmarking/linkage-bench-cache-experiments.json /data; chown -R 1000:1000 /data"
     - script: |
         echo "Starting benchmarks"
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up db_init > /dev/null 2>&1
