@@ -9,7 +9,7 @@ trigger:
 - feature-azure-pipeline
 
 
-#stages:
+stages:
 #- stage: stage_docker_image_build
 #  displayName: Build docker images
 #  dependsOn: []
