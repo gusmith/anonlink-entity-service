@@ -77,10 +77,6 @@ stages:
     steps:
     - script: |
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
-    - bash: |
-        ./tools/create-benchmark-cache.sh
-        echo "Copying experiments into cache volume"
-        docker run --rm -v $PWD:/src -v linkage-benchmark-data:/data busybox sh -c "ls src; cp -r /src/benchmarking/linkage-bench-cache-experiments.json /data; chown -R 1000:1000 /data"
     - script: |
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up db_init > /dev/null 2>&1
       env:
@@ -91,6 +87,7 @@ stages:
       env:
         TAG: $(dockertag)
     - script: |
+        $(commandPrefix) ps -q benchmark | xargs -I@ docker cp @:/app/results.json results.json
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
       env:
         TAG: $(dockertag)
