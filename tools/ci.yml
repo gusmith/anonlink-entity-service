@@ -7,7 +7,7 @@ services:
     environment:
       - ENTITY_SERVICE_URL=http://nginx:8851/api/v1
       - INITIAL_DELAY=20
-    entrypoint: /bin/sh -c "wait4ports nginx:8851 ; python -m pytest entityservice/tests -x"
+    entrypoint: /bin/sh -c "wait4ports nginx:8851 ; python -m pytest entityservice/tests --junitxml=testResults -x"
     depends_on:
       - db
       - redis
