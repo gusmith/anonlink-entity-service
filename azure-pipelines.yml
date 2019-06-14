@@ -55,13 +55,16 @@ stages:
       env:
         TAG: $(dockertag)
     - script: |
-        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up --abort-on-container-exit --exit-code-from tests db minio redis backend worker nginx tests
-      env:
-        TAG: $(dockertag)
-    - script: |
+        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up --abort-on-container-exit db minio redis backend worker nginx tests
+        $(commandPrefix) ps -q tests | xargs -I@ docker cp @:/var/www/testResults testResults
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
       env:
         TAG: $(dockertag)
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: 'testResults/**/test-*.xml'
+        testRunTitle: 'Publish integration test results'
 
 - stage: benchmark
   displayName: benchmark
@@ -91,3 +94,9 @@ stages:
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
       env:
         TAG: $(dockertag)
+    # Publish Pipeline Artifact
+    # Publish a local directory or file as a named artifact for the current pipeline.
+    - task: PublishPipelineArtifact@0
+      inputs:
+        artifactName: 'benchmark' 
+        targetPath: results.json
