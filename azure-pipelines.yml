@@ -59,11 +59,8 @@ stages:
       env:
         TAG: $(dockertag)
     - script: |
-        $(commandPrefix) ps -q tests | xargs -I@ docker cp @:/var/www/testResults.xml $(Build.ArtifactStagingDirectory)/testResults.xml
-        echo $(Build.ArtifactStagingDirectory)
-        ls $(Build.ArtifactStagingDirectory)
+        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) ps -q tests | xargs -I@ docker cp @:/var/www/testResults.xml testResults.xml
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
-        ls $(Build.ArtifactStagingDirectory)
       env:
         TAG: $(dockertag)
       condition: succeededOrFailed()
@@ -71,21 +68,24 @@ stages:
       condition: succeededOrFailed()
       inputs:
         testResultsFormat: 'JUnit'
-        testResultsFiles: '$(Build.ArtifactStagingDirectory)/testResults.xml'
+        testResultsFiles: 'testResults.xml'
         testRunTitle: 'Publish integration test results'
         failTaskOnFailedTests: true
 
-- stage: benchmark
-  displayName: benchmark
+- stage: stage_benchmark
+  displayName: Benchmark
 #  dependsOn: 
 #  - stage_docker_image_build
 #  - stage_benchmark_image_build
   dependsOn: []
   jobs:
-  - job: benchmark
+  - job: Benchmark
     timeoutInMinutes: 15
     variables:
       commandPrefix: docker-compose -f tools/docker-compose.yml -f tools/ci.yml --project-directory .
+    displayName: Benchmarking
+    pool:
+      vmImage: 'ubuntu-16.04'
     steps:
     - script: |
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
@@ -99,11 +99,8 @@ stages:
       env:
         TAG: $(dockertag)
     - script: |
-        $(commandPrefix) ps -q benchmark | xargs -I@ docker cp @:/app/results.json $(Build.ArtifactStagingDirectory)/results.json
-        echo $(Build.ArtifactStagingDirectory)
-        ls $(Build.ArtifactStagingDirectory)
+        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) ps -q benchmark | xargs -I@ docker cp @:/app/results.json results.json
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
-        ls $(Build.ArtifactStagingDirectory)
       env:
         TAG: $(dockertag)
     # Publish Pipeline Artifact
@@ -111,4 +108,4 @@ stages:
     - task: PublishPipelineArtifact@0
       inputs:
         artifactName: 'benchmark'
-        targetPath: $(Build.ArtifactStagingDirectory)/results.json
+        targetPath: results.json
