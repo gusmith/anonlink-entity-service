@@ -59,7 +59,7 @@ stages:
       env:
         TAG: $(dockertag)
     - script: |
-        $(commandPrefix) ps -q tests | xargs -I@ docker cp @:/var/www/testResults.xml testResults.xml
+        $(commandPrefix) ps -q tests | xargs -I@ docker cp @:/var/www/testResults.xml $(Build.ArtifactStagingDirectory)/testResults.xml
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
       env:
         TAG: $(dockertag)
@@ -68,7 +68,7 @@ stages:
       condition: succeededOrFailed()
       inputs:
         testResultsFormat: 'JUnit'
-        testResultsFiles: '**/testResults.xml'
+        testResultsFiles: '$(Build.ArtifactStagingDirectory)/testResults.xml'
         testRunTitle: 'Publish integration test results'
         failTaskOnFailedTests: true
 
@@ -96,7 +96,7 @@ stages:
       env:
         TAG: $(dockertag)
     - script: |
-        $(commandPrefix) ps -q benchmark | xargs -I@ docker cp @:/app/results.json results.json
+        $(commandPrefix) ps -q benchmark | xargs -I@ docker cp @:/app/results.json $(Build.ArtifactStagingDirectory)/results.json
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
       env:
         TAG: $(dockertag)
@@ -105,4 +105,4 @@ stages:
     - task: PublishPipelineArtifact@0
       inputs:
         artifactName: 'benchmark'
-        targetPath: results.json
+        targetPath: $(Build.ArtifactStagingDirectory)/results.json
