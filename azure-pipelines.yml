@@ -60,7 +60,10 @@ stages:
         TAG: $(dockertag)
     - script: |
         $(commandPrefix) ps -q tests | xargs -I@ docker cp @:/var/www/testResults.xml $(Build.ArtifactStagingDirectory)/testResults.xml
+        echo $(Build.ArtifactStagingDirectory)
+        ls $(Build.ArtifactStagingDirectory)
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
+        ls $(Build.ArtifactStagingDirectory)
       env:
         TAG: $(dockertag)
       condition: succeededOrFailed()
@@ -97,7 +100,10 @@ stages:
         TAG: $(dockertag)
     - script: |
         $(commandPrefix) ps -q benchmark | xargs -I@ docker cp @:/app/results.json $(Build.ArtifactStagingDirectory)/results.json
+        echo $(Build.ArtifactStagingDirectory)
+        ls $(Build.ArtifactStagingDirectory)
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
+        ls $(Build.ArtifactStagingDirectory)
       env:
         TAG: $(dockertag)
     # Publish Pipeline Artifact
