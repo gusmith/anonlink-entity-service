@@ -90,7 +90,7 @@ stages:
       env:
         TAG: $(dockertag)
     - script: |
-        $(commandPrefix) ps -q benchmark | xargs -I@ docker cp @:/app/results.json ${PWD}/results.json
+        $(commandPrefix) ps -q benchmark | xargs -I@ docker cp @:/app/results.json results.json
         $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
       env:
         TAG: $(dockertag)
@@ -99,4 +99,4 @@ stages:
     - task: PublishPipelineArtifact@0
       inputs:
         artifactName: 'benchmark' 
-        targetPath: ${PWD}/results.json
+        targetPath: results.json
