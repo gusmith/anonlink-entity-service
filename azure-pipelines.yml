@@ -149,11 +149,11 @@ stages:
         cat .azurePipeline/k8s_test_pvc.yaml.tmpl | \
         sed 's/\$PVC'"/$(PVC)/g" | \
         sed 's/\$DEPLOYMENT_NAME'"/$(DEPLOYMENT_NAME)/g" | \
-        kubectl apply -f -
+        kubectl apply -n=$(NAMESPACE) -f -
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
-        kubectl get services -lapp=$(DEPLOYMENT)-entity-service -o jsonpath="{.items[0].spec.clusterIP}" | xargs -I@ echo "##vso[task.setvariable variable=SERVICE_IP]@"
+        kubectl get services -n=$(NAMESPACE) -lapp=$(DEPLOYMENT_NAME)-entity-service -o jsonpath="{.items[0].spec.clusterIP}" | xargs -I@ echo "##vso[task.setvariable variable=SERVICE_IP]@"
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
@@ -163,7 +163,7 @@ stages:
         sed 's/\$DEPLOYMENT_NAME'"/$(DEPLOYMENT_NAME)/g" | \
         sed 's/\$IMAGE_NAME_WITH_TAG'"/$(IMAGE_NAME_WITH_TAG)/g" | \
         sed 's/\$SERVICE_IP'"/$(SERVICE_IP)/g" | \
-        kubectl apply -f -
+        kubectl apply -n=$(NAMESPACE) -f -
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
@@ -173,7 +173,7 @@ stages:
         sed 's/\$PVC'"/$(PVC)/g" | \
         sed 's/\$DEPLOYMENT_NAME'"/$(DEPLOYMENT_NAME)/g" | \
         sed 's/\$POD_NAME'"/$(POD_NAME)/g" | \
-        kubectl apply -f -
+        kubectl apply -n=$(NAMESPACE) -f -
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script:
@@ -181,10 +181,10 @@ stages:
         kubectl cp $(NAMESPACE)/$(POD_NAME):/mnt/results.xml k8s-results.xml
 
         echo "Delete the temp pod"
-        kubectl delete pod $(POD_NAME)
+        kubectl delete pod -n=$(NAMESPACE) $(POD_NAME)
 
         echo "Delete the pvc"
-        kubectl delete pvc -l deployment=$(DEPLOYMENT_NAME)
+        kubectl delete pvc -n=$(NAMESPACE) -l deployment=$(DEPLOYMENT_NAME)
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - task: PublishTestResults@2
