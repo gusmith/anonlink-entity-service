@@ -158,6 +158,8 @@ stages:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
         echo "Start the test job"
+        echo "Service IP $(SERVICE_IP)"
+        echo "Image name with tag $(IMAGE_NAME_WITH_TAG)"
         cat .azurePipeline/k8s_test_job.yaml.tmpl | \
         sed 's|\$PVC'"|$(PVC)|g" | \
         sed 's|\$DEPLOYMENT_NAME'"|$(DEPLOYMENT_NAME)|g" | \
