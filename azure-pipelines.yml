@@ -124,6 +124,7 @@ stages:
         echo $(DownloadSecureFile.secureFilePath) | xargs -I@ echo "##vso[task.setvariable variable=KUBECONFIGFILE]@"
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
     - script: |
+        cd deployment/entity-service
         helm version
         helm dependency update
         helm upgrade --install --wait --namespace $(NAMESPACE) $(DEPLOYMENT) . \
