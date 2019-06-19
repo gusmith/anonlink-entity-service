@@ -128,6 +128,7 @@ stages:
         echo data61/anonlink-app:$(dockertag) | xargs -I@ echo "##vso[task.setvariable variable=IMAGE_NAME_WITH_TAG]@"
         echo $(dockertag)-tmppod | xargs -I@ echo "##vso[task.setvariable variable=POD_NAME]@"
     - script: |
+        echo "Start all the entity service pods"
         cd deployment/entity-service
         helm version
         helm init --client-only
@@ -144,6 +145,7 @@ stages:
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
+        echo "Create Persistent Volume Claim"
         cat .azurePipeline/k8s_test_pvc.yaml.tmpl | \
         sed 's/\$PVC'"/$(PVC)/g" | \
         sed 's/\$DEPLOYMENT_NAME'"/$(DEPLOYMENT_NAME)/g" | \
@@ -151,10 +153,11 @@ stages:
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
-        kubectl get services -lapp=$(DEPLOYMENT)-entity-service -o jsonpath="{.items[0].spec.clusterIP} | xargs -I@ echo "##vso[task.setvariable variable=SERVICE_IP]@"
+        kubectl get services -lapp=$(DEPLOYMENT)-entity-service -o jsonpath="{.items[0].spec.clusterIP}" | xargs -I@ echo "##vso[task.setvariable variable=SERVICE_IP]@"
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
+        echo "Start the test job"
         cat .azurePipeline/k8s_test_job.yaml.tmpl | \
         sed 's/\$PVC'"/$(PVC)/g" | \
         sed 's/\$DEPLOYMENT_NAME'"/$(DEPLOYMENT_NAME)/g" | \
@@ -164,6 +167,7 @@ stages:
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
+        echo "Get the results"
         kubectl get pods -l deployment=$(DEPLOYMENT) -o jsonpath="{.items[0].metadata.name}" | xargs -I@ kubectl logs -f @
         cat .azurePipeline/k8s_get_results.yaml.tmpl | \
         sed 's/\$PVC'"/$(PVC)/g" | \
