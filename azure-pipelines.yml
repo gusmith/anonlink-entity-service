@@ -121,7 +121,7 @@ stages:
       inputs:
         secureFile: awsClusterConfig
     - script: |
-        echo $env:DOWNLOADSECUREFILE_SECUREFILEPATH | xargs -I@ echo "##vso[task.setvariable variable=KUBECONFIG]@"
+        echo $(DownloadSecureFile.secureFilePath) | xargs -I@ echo "##vso[task.setvariable variable=KUBECONFIGFILE]@"
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
     - script: |
         helm --kubeconfig $(KUBECONFIG) version
@@ -136,20 +136,20 @@ stages:
                     --set api.dbinit.image.tag=$(dockertag) \
                     --set workers.image.tag=$(dockertag)
       env:
-        KUBECONFIG: $(KUBECONFIG)
+        KUBECONFIG: KUBECONFIGFILE
     - script: |
         cat .azurePipeline/k8s_test_pvc.yaml.tmpl | \
         sed 's/\$PVC'"/$(PVC)/g" | \
         sed 's/\$DEPLOYMENT_NAME'"/$(DEPLOYMENT_NAME)/g" | \
         kubectl apply -f -
       env:
-        KUBECONFIG: $(KUBECONFIG)
+        KUBECONFIG: $(KUBECONFIGFILE)
         PVC: $(DEPLOYMENT)-test-results
         DEPLOYMENT_NAME: $(DEPLOYMENT)
     - script: |
         kubectl get services -lapp=$(DEPLOYMENT)-entity-service -o jsonpath="{.items[0].spec.clusterIP} | xargs -I@ echo "##vso[task.setvariable variable=serviceIP]@"
       env:
-        KUBECONFIG: $(KUBECONFIG)
+        KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
         cat .azurePipeline/k8s_test_job.yaml.tmpl | \
         sed 's/\$PVC'"/$(PVC)/g" | \
@@ -158,7 +158,7 @@ stages:
         sed 's/\$SERVICE_IP'"/$(SERVICE_IP)/g" | \
         kubectl apply -f -
       env:
-        KUBECONFIG: $(KUBECONFIG)
+        KUBECONFIG: $(KUBECONFIGFILE)
         PVC: $(DEPLOYMENT)-test-results
         DEPLOYMENT_NAME: $(DEPLOYMENT)
         IMAGE_NAME_WITH_TAG: data61/anonlink-app:$(dockertag)
@@ -171,7 +171,7 @@ stages:
         sed 's/\$POD_NAME'"/$(POD_NAME)/g" | \
         kubectl apply -f -
       env:
-        KUBECONFIG: $(KUBECONFIG)
+        KUBECONFIG: $(KUBECONFIGFILE)
         PVC: $(DEPLOYMENT)-test-results
         DEPLOYMENT_NAME: $(DEPLOYMENT)
         POD_NAME: $(dockertag)-tmppod
@@ -185,7 +185,7 @@ stages:
         echo "Delete the pvc"
         kubectl delete pvc -l deployment=$(DEPLOYMENT_NAME)
       env:
-        KUBECONFIG: $(KUBECONFIG)
+        KUBECONFIG: $(KUBECONFIGFILE)
         DEPLOYMENT_NAME: $(DEPLOYMENT)
         POD_NAME: $(dockertag)-tmppod
     - task: PublishTestResults@2
