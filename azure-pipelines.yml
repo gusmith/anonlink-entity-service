@@ -110,7 +110,7 @@ stages:
   jobs:
   - job:
     variables:
-     DEPLOYMENT: composeProject
+     DEPLOYMENT: compose-project
      NAMESPACE: test-azure
     pool:
       vmImage: 'ubuntu-16.04'
