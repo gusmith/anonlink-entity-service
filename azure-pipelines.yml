@@ -108,7 +108,9 @@ stages:
   displayName: Kubernetes deployment
   dependsOn: []
   jobs:
-  - job:
+  - job: job_k8s_deployment
+    displayName: Kubernetes deployment and test
+    timeoutInMinutes: 40
     variables:
      DEPLOYMENT: compose-project
      NAMESPACE: test-azure
@@ -181,7 +183,7 @@ stages:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script:
         echo "Fetch the results from the running pod"
-        kubectl cp $(NAMESPACE)|$(POD_NAME):/mnt/results.xml k8s-results.xml
+        kubectl cp $(NAMESPACE)/$(POD_NAME):/mnt/results.xml k8s-results.xml
 
         echo "Delete the temp pod"
         kubectl delete pod -n=$(NAMESPACE) $(POD_NAME)
