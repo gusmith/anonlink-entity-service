@@ -186,7 +186,11 @@ stages:
         kubectl cp $(NAMESPACE)/$(POD_NAME):/mnt/results.xml k8s-results.xml
         
         echo "Delete the temp pod"
-        kubectl delete pod -n=$(NAMESPACE) $(POD_NAME)
+        cat .azurePipeline/k8s_get_results.yaml.tmpl | \
+        sed 's|\$PVC'"|$(PVC)|g" | \
+        sed 's|\$DEPLOYMENT_NAME'"|$(DEPLOYMENT_NAME)|g" | \
+        sed 's|\$POD_NAME'"|$(POD_NAME)|g" | \
+        kubectl delete -n=$(NAMESPACE) -f -
         
         echo "Delete the pvc"
         kubectl delete pvc -n=$(NAMESPACE) -l deployment=$(DEPLOYMENT_NAME)
