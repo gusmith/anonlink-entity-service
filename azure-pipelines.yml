@@ -35,77 +35,162 @@ stages:
 #      imageName: data61/anonlink-benchmark
 #      jobName: 'anonlink_benchmark'
 
-- stage: stage_integration_tests
-  displayName: Integration tests
+#- stage: stage_integration_tests
+#  displayName: Integration tests
 #  dependsOn: [stage_docker_image_build]
-  dependsOn: []
-  jobs:
-  - job: integration_test
-    timeoutInMinutes: 10
-    variables:
-     commandPrefix: docker-compose -f tools/docker-compose.yml -f tools/ci.yml --project-directory . 
-    displayName: Integration tests
-    pool:
-      vmImage: 'ubuntu-16.04'
-    steps:
-    - script: |
-        sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
-    - script: |
-        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up db_init > /dev/null 2>&1
-      env:
-        TAG: $(dockertag)
-    - script: |
-        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up --abort-on-container-exit db minio redis backend worker nginx tests
-      env:
-        TAG: $(dockertag)
-    - script: |
-        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) ps -q tests | xargs -I@ docker cp @:/var/www/testResults.xml testResults.xml
-        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
-      env:
-        TAG: $(dockertag)
-      condition: succeededOrFailed()
-    - task: PublishTestResults@2
-      condition: succeededOrFailed()
-      inputs:
-        testResultsFormat: 'JUnit'
-        testResultsFiles: 'testResults.xml'
-        testRunTitle: 'Publish integration test results'
-        failTaskOnFailedTests: true
+#  dependsOn: []
+#  jobs:
+#  - job: integration_test
+#    timeoutInMinutes: 10
+#    variables:
+#     commandPrefix: docker-compose -f tools/docker-compose.yml -f tools/ci.yml --project-directory . 
+#    displayName: Integration tests
+#    pool:
+#      vmImage: 'ubuntu-16.04'
+#    steps:
+#    - script: |
+#        sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
+#    - script: |
+#        echo "Initialise the database"
+#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up db_init > /dev/null 2>&1
+#        echo "Start all the services and the tests." 
+#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up --abort-on-container-exit db minio redis backend worker nginx tests
+#        echo "Retrive test results." 
+#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) ps -q tests | xargs -I@ docker cp @:/var/www/testResults.xml testResults.xml
+#        echo "Cleaning."
+#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
+#      env:
+#        TAG: $(dockertag)
+#    - task: PublishTestResults@2
+#      condition: succeededOrFailed()
+#      inputs:
+#        testResultsFormat: 'JUnit'
+#        testResultsFiles: 'testResults.xml'
+#        testRunTitle: 'Publish integration test results'
+#        failTaskOnFailedTests: true
 
-- stage: stage_benchmark
-  displayName: Benchmark
+#- stage: stage_benchmark
+#  displayName: Benchmark
 #  dependsOn: 
 #  - stage_docker_image_build
 #  - stage_benchmark_image_build
+#  dependsOn: []
+#  jobs:
+#  - job: Benchmark
+#    timeoutInMinutes: 15
+#    variables:
+#      commandPrefix: docker-compose -f tools/docker-compose.yml -f tools/ci.yml --project-directory .
+#    displayName: Benchmarking
+#    pool:
+#      vmImage: 'ubuntu-16.04'
+#    steps:
+#    - script: |
+#        sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
+#    - script: |
+#        echo "Initialise the database"
+#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up db_init > /dev/null 2>&1
+#        echo "Start all the services and the becnmark."
+#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up --abort-on-container-exit --exit-code-from benchmark db minio redis backend worker nginx benchmark
+#        echo "Retrive benchmark results." 
+#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) ps -q benchmark | xargs -I@ docker cp @:/app/results.json results.json
+#        echo "Cleaning."
+#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
+#      env:
+#        TAG: $(dockertag)
+    # Publish Pipeline Artifact
+    # Publish a local directory or file as a named artifact for the current pipeline.
+#    - task: PublishPipelineArtifact@0
+#      inputs:
+#        artifactName: 'benchmark'
+#        targetPath: results.json
+
+- stage: stage_k8s_deployment
+  displayName: Kubernetes deployment
   dependsOn: []
   jobs:
-  - job: Benchmark
-    timeoutInMinutes: 15
+  - job:
     variables:
-      commandPrefix: docker-compose -f tools/docker-compose.yml -f tools/ci.yml --project-directory .
-    displayName: Benchmarking
+     DEPLOYMENT: composeProject
+     NAMESPACE: test-azure
     pool:
       vmImage: 'ubuntu-16.04'
     steps:
+    # Download Secure File
+    # Download a secure file to a temporary location on the build or release agent
+    - task: DownloadSecureFile@1
+      inputs:
+        secureFile: awsClusterConfig
     - script: |
+        echo "##vso[task.setvariable variable=KUBECONFIG]$(DOWNLOADSECUREFILE_SECUREFILEPATH)"
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
     - script: |
-        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up db_init > /dev/null 2>&1
+        helm version
+        helm dependency update
+        helm upgrade --install --wait --namespace $(NAMESPACE) $(DEPLOYMENT) . \
+                    -f values.yaml -f minimal-values.yaml \
+                    --set api.app.debug=true \
+                    --set global.postgresql.postgresqlPassword=notaproductionpassword \
+                    --set api.ingress.enabled=false \
+                    --set api.www.image.tag=$(dockertag) \
+                    --set api.app.image.tag=$(dockertag) \
+                    --set api.dbinit.image.tag=$(dockertag) \
+                    --set workers.image.tag=$(dockertag)
       env:
-        TAG: $(dockertag)
+        KUBECONFIG: $(KUBECONFIG)
     - script: |
-        echo "Starting benchmarks"
-        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up --abort-on-container-exit --exit-code-from benchmark db minio redis backend worker nginx benchmark
+        cat .azurePipeline/k8s_test_pvc.yaml.tmpl | \
+        sed 's/\$PVC'"/$(PVC)/g" | \
+        sed 's/\$DEPLOYMENT_NAME'"/$(DEPLOYMENT_NAME)/g" | \
+        kubectl apply -f -
       env:
-        TAG: $(dockertag)
+        KUBECONFIG: $(KUBECONFIG)
+        PVC: $(DEPLOYMENT)-test-results
+        DEPLOYMENT_NAME: $(DEPLOYMENT)
     - script: |
-        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) ps -q benchmark | xargs -I@ docker cp @:/app/results.json results.json
-        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
+        kubectl get services -lapp=$(DEPLOYMENT)-entity-service -o jsonpath="{.items[0].spec.clusterIP} | xargs -I@ echo "##vso[task.setvariable variable=serviceIP]@"
       env:
-        TAG: $(dockertag)
-    # Publish Pipeline Artifact
-    # Publish a local directory or file as a named artifact for the current pipeline.
-    - task: PublishPipelineArtifact@0
+        KUBECONFIG: $(KUBECONFIG)
+    - script: |
+        cat .azurePipeline/k8s_test_job.yaml.tmpl | \
+        sed 's/\$PVC'"/$(PVC)/g" | \
+        sed 's/\$DEPLOYMENT_NAME'"/$(DEPLOYMENT_NAME)/g" | \
+        sed 's/\$IMAGE_NAME_WITH_TAG'"/$(IMAGE_NAME_WITH_TAG)/g" | \
+        sed 's/\$SERVICE_IP'"/$(SERVICE_IP)/g" | \
+        kubectl apply -f -
+      env:
+        KUBECONFIG: $(KUBECONFIG)
+        PVC: $(DEPLOYMENT)-test-results
+        DEPLOYMENT_NAME: $(DEPLOYMENT)
+        IMAGE_NAME_WITH_TAG: data61/anonlink-app:$(dockertag)
+        SERVICE_IP: $(serviceIP)
+    - script: |
+        kubectl get pods -l deployment=$(DEPLOYMENT) -o jsonpath="{.items[0].metadata.name}" | xargs -I@ kubectl logs -f @
+        cat .azurePipeline/k8s_get_results.yaml.tmpl | \
+        sed 's/\$PVC'"/$(PVC)/g" | \
+        sed 's/\$DEPLOYMENT_NAME'"/$(DEPLOYMENT_NAME)/g" | \
+        sed 's/\$POD_NAME'"/$(POD_NAME)/g" | \
+        kubectl apply -f -
+      env:
+        KUBECONFIG: $(KUBECONFIG)
+        PVC: $(DEPLOYMENT)-test-results
+        DEPLOYMENT_NAME: $(DEPLOYMENT)
+        POD_NAME: $(dockertag)-tmppod
+    - script:
+        echo "Fetch the results from the running pod"
+        kubectl cp $(NAMESPACE)/$(POD_NAME):/mnt/results.xml k8s-results.xml
+
+        echo "Delete the temp pod"
+        kubectl delete pod $(POD_NAME)
+
+        echo "Delete the pvc"
+        kubectl delete pvc -l deployment=$(DEPLOYMENT_NAME)
+      env:
+        KUBECONFIG: $(KUBECONFIG)
+        DEPLOYMENT_NAME: $(DEPLOYMENT)
+        POD_NAME: $(dockertag)-tmppod
+    - task: PublishTestResults@2
       inputs:
-        artifactName: 'benchmark'
-        targetPath: results.json
+        testResultsFormat: 'JUnit'
+        testResultsFiles: 'k8s-results.xml'
+        testRunTitle: 'Publish kubernetes test results'
+        failTaskOnFailedTests: true 
