@@ -126,6 +126,7 @@ stages:
     - script: |
         cd deployment/entity-service
         helm version
+        helm init --client-only
         helm dependency update
         helm upgrade --install --wait --namespace $(NAMESPACE) $(DEPLOYMENT) . \
                     -f values.yaml -f minimal-values.yaml \
