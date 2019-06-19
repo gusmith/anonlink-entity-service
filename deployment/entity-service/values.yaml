@@ -26,7 +26,7 @@ api:
   www:
 
     image:
-      repository: quay.io/n1analytics/entity-nginx
+      repository: data61/anonlink-nginx
       tag: "v1.4.2"
       ## "IfNotPresent" or "Always"
       pullPolicy: IfNotPresent
@@ -44,7 +44,7 @@ api:
 
   app:
     image:
-      repository: quay.io/n1analytics/entity-app
+      repository: data61/anonlink-app
       tag: "v1.11.0"
       ## Options: "IfNotPresent" or "Always"
       pullPolicy: Always
@@ -68,7 +68,7 @@ api:
     ## Database init can only run during chart install
     ## It cannot be updated! So we have a separate image + tag
     image:
-      repository: quay.io/n1analytics/entity-app
+      repository: data61/anonlink-app
       tag: "v1.11.0"
 
     resources:
@@ -78,11 +78,6 @@ api:
       limits:
         cpu: 250m
         memory: 256Mi
-
-
-  ## A shared pull secret for obtaining docker images
-  ## Needs to be pushed into the namespace prior to installation
-  pullSecret: n1-quay-pull-secret
 
   ingress:
     enabled: true
@@ -140,10 +135,9 @@ workers:
   name: "matcher"
 
   image:
-    repository: "quay.io/n1analytics/entity-app"
+    repository: "data61/anonlink-app"
     tag: "v1.11.0"
     pullPolicy: Always
-    pullSecret: "n1-quay-pull-secret"
 
   ## Usually this is set to 1 per compute node
   replicaCount: 2
