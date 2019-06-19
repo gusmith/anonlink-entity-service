@@ -21,7 +21,7 @@ spec:
       volumes:
         - name: results
           persistentVolumeClaim:
-            claimName: $PVC_NAME
+            claimName: $PVC
       containers:
         - name: entitytester
           image: $IMAGE_NAME_WITH_TAG
