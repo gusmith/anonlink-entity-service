@@ -124,9 +124,9 @@ stages:
         echo $(DownloadSecureFile.secureFilePath) | xargs -I@ echo "##vso[task.setvariable variable=KUBECONFIGFILE]@"
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
     - script: |
-        helm --kubeconfig $(KUBECONFIG) version
-        helm --kubeconfig $(KUBECONFIG) dependency update
-        helm --kubeconfig $(KUBECONFIG) upgrade --install --wait --namespace $(NAMESPACE) $(DEPLOYMENT) . \
+        helm version
+        helm dependency update
+        helm upgrade --install --wait --namespace $(NAMESPACE) $(DEPLOYMENT) . \
                     -f values.yaml -f minimal-values.yaml \
                     --set api.app.debug=true \
                     --set global.postgresql.postgresqlPassword=notaproductionpassword \
@@ -136,7 +136,7 @@ stages:
                     --set api.dbinit.image.tag=$(dockertag) \
                     --set workers.image.tag=$(dockertag)
       env:
-        KUBECONFIG: KUBECONFIGFILE
+        KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
         cat .azurePipeline/k8s_test_pvc.yaml.tmpl | \
         sed 's/\$PVC'"/$(PVC)/g" | \
