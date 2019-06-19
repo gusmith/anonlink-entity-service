@@ -122,14 +122,17 @@ stages:
     - task: DownloadSecureFile@1
       inputs:
         secureFile: awsClusterConfig
+    # Prepare all the variables required during the scripts.
     - script: |
         echo $(DownloadSecureFile.secureFilePath) | xargs -I@ echo "##vso[task.setvariable variable=KUBECONFIGFILE]@"
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
         echo $(DEPLOYMENT)-test-results | xargs -I@ echo "##vso[task.setvariable variable=PVC]@"
         echo $(DEPLOYMENT) | xargs -I@ echo "##vso[task.setvariable variable=DEPLOYMENT_NAME]@"
+    # Preparing new variables, but built from the previous ones which is why they are in a separate step. I tried to bring them together, but they were not yet accessible to built these ones.
     - script: |
         echo data61/anonlink-app:$(dockertag) | xargs -I@ echo "##vso[task.setvariable variable=IMAGE_NAME_WITH_TAG]@"
         echo $(dockertag)-tmppod | xargs -I@ echo "##vso[task.setvariable variable=POD_NAME]@"
+    # Start the whole service using helm. We are currently lucky, the helm version on azure is compatible with the one on our cluster, but the latest version of helm is not (tested from my laptop).
     - script: |
         echo "Start all the entity service pods"
         cd deployment/entity-service
@@ -182,9 +185,29 @@ stages:
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
-        echo "Fetch the results from the running pod"
+        echo "Fetch the results from the job which should have finished"
         kubectl cp $(NAMESPACE)/$(POD_NAME):/mnt/results.xml k8s-results.xml
-        
+      env:
+        KUBECONFIG: $(KUBECONFIGFILE)
+    - task: PublishTestResults@2
+      condition: succeeded()
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: 'k8s-results.xml'
+        testRunTitle: 'Publish kubernetes test results'
+        failTaskOnFailedTests: true 
+    - script: |
+        echo "Delete the test job"
+        cat .azurePipeline/k8s_test_job.yaml.tmpl | \
+        sed 's|\$PVC'"|$(PVC)|g" | \
+        sed 's|\$DEPLOYMENT_NAME'"|$(DEPLOYMENT_NAME)|g" | \
+        sed 's|\$IMAGE_NAME_WITH_TAG'"|$(IMAGE_NAME_WITH_TAG)|g" | \
+        sed 's|\$SERVICE_IP'"|$(SERVICE_IP)|g" | \
+        kubectl delete -n=$(NAMESPACE) -f -
+      condition: always()
+      env:
+        KUBECONFIG: $(KUBECONFIGFILE)  
+    - script: |
         echo "Delete the temp pod"
         cat .azurePipeline/k8s_get_results.yaml.tmpl | \
         sed 's|\$PVC'"|$(PVC)|g" | \
@@ -194,11 +217,6 @@ stages:
         
         echo "Delete the pvc"
         kubectl delete pvc -n=$(NAMESPACE) -l deployment=$(DEPLOYMENT_NAME)
+      condition: always()
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
-    - task: PublishTestResults@2
-      inputs:
-        testResultsFormat: 'JUnit'
-        testResultsFiles: 'k8s-results.xml'
-        testRunTitle: 'Publish kubernetes test results'
-        failTaskOnFailedTests: true 
