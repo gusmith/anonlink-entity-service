@@ -121,7 +121,7 @@ stages:
       inputs:
         secureFile: awsClusterConfig
     - script: |
-        echo "##vso[task.setvariable variable=KUBECONFIG]$(DOWNLOADSECUREFILE_SECUREFILEPATH)"
+        echo "##vso[task.setvariable variable=KUBECONFIG]$env:DOWNLOADSECUREFILE_SECUREFILEPATH"
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
     - script: |
         helm version
