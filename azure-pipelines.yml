@@ -124,9 +124,9 @@ stages:
         echo "##vso[task.setvariable variable=KUBECONFIG]$env:DOWNLOADSECUREFILE_SECUREFILEPATH"
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
     - script: |
-        helm version
-        helm dependency update
-        helm upgrade --install --wait --namespace $(NAMESPACE) $(DEPLOYMENT) . \
+        helm --kubeconfig $(KUBECONFIG) version
+        helm --kubeconfig $(KUBECONFIG) dependency update
+        helm --kubeconfig $(KUBECONFIG) upgrade --install --wait --namespace $(NAMESPACE) $(DEPLOYMENT) . \
                     -f values.yaml -f minimal-values.yaml \
                     --set api.app.debug=true \
                     --set global.postgresql.postgresqlPassword=notaproductionpassword \
