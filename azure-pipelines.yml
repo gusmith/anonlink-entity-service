@@ -123,6 +123,10 @@ stages:
     - script: |
         echo $(DownloadSecureFile.secureFilePath) | xargs -I@ echo "##vso[task.setvariable variable=KUBECONFIGFILE]@"
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
+        echo $(DEPLOYMENT)-test-results | xargs -I@ echo "##vso[task.setvariable variable=PVC]@"
+        echo $(DEPLOYMENT) | xargs -I@ echo "##vso[task.setvariable variable=DEPLOYMENT_NAME]@"
+        echo data61/anonlink-app:$(dockertag) | xargs -I@ echo "##vso[task.setvariable variable=IMAGE_NAME_WITH_TAG]@"
+        echo $(dockertag)-tmppod | xargs -I@ echo "##vso[task.setvariable variable=POD_NAME]@"
     - script: |
         cd deployment/entity-service
         helm version
@@ -146,10 +150,8 @@ stages:
         kubectl apply -f -
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
-        PVC: $(DEPLOYMENT)-test-results
-        DEPLOYMENT_NAME: $(DEPLOYMENT)
     - script: |
-        kubectl get services -lapp=$(DEPLOYMENT)-entity-service -o jsonpath="{.items[0].spec.clusterIP} | xargs -I@ echo "##vso[task.setvariable variable=serviceIP]@"
+        kubectl get services -lapp=$(DEPLOYMENT)-entity-service -o jsonpath="{.items[0].spec.clusterIP} | xargs -I@ echo "##vso[task.setvariable variable=SERVICE_IP]@"
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
@@ -161,10 +163,6 @@ stages:
         kubectl apply -f -
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
-        PVC: $(DEPLOYMENT)-test-results
-        DEPLOYMENT_NAME: $(DEPLOYMENT)
-        IMAGE_NAME_WITH_TAG: data61/anonlink-app:$(dockertag)
-        SERVICE_IP: $(serviceIP)
     - script: |
         kubectl get pods -l deployment=$(DEPLOYMENT) -o jsonpath="{.items[0].metadata.name}" | xargs -I@ kubectl logs -f @
         cat .azurePipeline/k8s_get_results.yaml.tmpl | \
@@ -174,9 +172,6 @@ stages:
         kubectl apply -f -
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
-        PVC: $(DEPLOYMENT)-test-results
-        DEPLOYMENT_NAME: $(DEPLOYMENT)
-        POD_NAME: $(dockertag)-tmppod
     - script:
         echo "Fetch the results from the running pod"
         kubectl cp $(NAMESPACE)/$(POD_NAME):/mnt/results.xml k8s-results.xml
@@ -188,8 +183,6 @@ stages:
         kubectl delete pvc -l deployment=$(DEPLOYMENT_NAME)
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
-        DEPLOYMENT_NAME: $(DEPLOYMENT)
-        POD_NAME: $(dockertag)-tmppod
     - task: PublishTestResults@2
       inputs:
         testResultsFormat: 'JUnit'
