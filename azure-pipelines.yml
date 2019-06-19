@@ -184,10 +184,8 @@ stages:
     - script:
         echo "Fetch the results from the running pod"
         kubectl cp $(NAMESPACE)/$(POD_NAME):/mnt/results.xml k8s-results.xml
-
         echo "Delete the temp pod"
         kubectl delete pod -n=$(NAMESPACE) $(POD_NAME)
-
         echo "Delete the pvc"
         kubectl delete pvc -n=$(NAMESPACE) -l deployment=$(DEPLOYMENT_NAME)
       env:
