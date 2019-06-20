@@ -3,7 +3,7 @@ variables:
   frontendImageName: data61/anonlink-nginx
 #  docsImageName: data61/anonlink-entity-service-docs
 #  tutorialImageName: data61/anonlink-entity-service-tutorial
-  benchmarkingImageName: data61/anonlink-benchmarking
+  benchmarkingImageName: data61/anonlink-benchmark
 
 trigger:
 - feature-azure-pipeline
