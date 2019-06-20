@@ -1,112 +1,92 @@
 variables:
-  backendImageName: quay.io/anonlink-test #data61/anonlink-app
+  backendImageName: data61/anonlink-app
   frontendImageName: data61/anonlink-nginx
-  docsImageName: quay.io/anonlink-test #data61/anonlink-entity-service-docs
-  tutorialImageName: quay.io/anonlink-test #data61/anonlink-entity-service-tutorial
-  benchmarkingImageName: quay.io/anonlink-test #data61/anonlink-benchmarking
+#  docsImageName: data61/anonlink-entity-service-docs
+#  tutorialImageName: data61/anonlink-entity-service-tutorial
+  benchmarkingImageName: data61/anonlink-benchmarking
 
 trigger:
 - feature-azure-pipeline
 
 
 stages:
-#- stage: stage_docker_image_build
-#  displayName: Build docker images
-#  dependsOn: []
-#  jobs:
-#  - template: .azurePipeline/templateDockerBuildPush.yml
-#    parameters:
-#      folder: './frontend'
-#      imageName: data61/anonlink-nginx
-#      jobName: 'anonlink_nginx'
-#  - template: .azurePipeline/templateDockerBuildPush.yml
-#    parameters:
-#      folder: './backend'
-#      imageName: data61/anonlink-app
-#      jobName: 'anonlink_app'
+- stage: stage_docker_image_build
+  displayName: Build docker images
+  dependsOn: []
+  jobs:
+  - template: .azurePipeline/templateDockerBuildPush.yml
+    parameters:
+      folder: './frontend'
+      imageName: $(frontendImageName)
+      jobName: 'anonlink_nginx'
+  - template: .azurePipeline/templateDockerBuildPush.yml
+    parameters:
+      folder: './backend'
+      imageName: $(backendImageName)
+      jobName: 'anonlink_app'
       
-#- stage: stage_benchmark_image_build
-#  displayName: Build benchmark images
-#  dependsOn: []
-#  jobs:
-#  - template: .azurePipeline/templateDockerBuildPush.yml
-#    parameters:
-#      folder: './benchmarking'
-#      imageName: data61/anonlink-benchmark
-#      jobName: 'anonlink_benchmark'
+- stage: stage_benchmark_image_build
+  displayName: Build benchmark images
+  dependsOn: []
+  jobs:
+  - template: .azurePipeline/templateDockerBuildPush.yml
+    parameters:
+      folder: './benchmarking'
+      imageName: $(benchmarkingImageName)
+      jobName: 'anonlink_benchmark'
 
-#- stage: stage_integration_tests
-#  displayName: Integration tests
-#  dependsOn: [stage_docker_image_build]
-#  dependsOn: []
-#  jobs:
-#  - job: integration_test
-#    timeoutInMinutes: 10
-#    variables:
-#     commandPrefix: docker-compose -f tools/docker-compose.yml -f tools/ci.yml --project-directory . 
-#    displayName: Integration tests
-#    pool:
-#      vmImage: 'ubuntu-16.04'
-#    steps:
-#    - script: |
-#        sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
-#    - script: |
-#        echo "Initialise the database"
-#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up db_init > /dev/null 2>&1
-#        echo "Start all the services and the tests." 
-#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up --abort-on-container-exit db minio redis backend worker nginx tests
-#        echo "Retrive test results." 
-#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) ps -q tests | xargs -I@ docker cp @:/var/www/testResults.xml testResults.xml
-#        echo "Cleaning."
-#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
-#      env:
-#        TAG: $(dockertag)
-#    - task: PublishTestResults@2
-#      condition: succeededOrFailed()
-#      inputs:
-#        testResultsFormat: 'JUnit'
-#        testResultsFiles: 'testResults.xml'
-#        testRunTitle: 'Publish integration test results'
-#        failTaskOnFailedTests: true
+- stage: stage_integration_tests
+  displayName: Integration tests
+  dependsOn: [stage_docker_image_build]
+  jobs:
+  - job: integration_test
+    timeoutInMinutes: 10
+    variables:
+      resultFile: testResults.xml
+    displayName: Integration tests
+    pool:
+      vmImage: 'ubuntu-16.04'
+    steps:
+    - script: |
+        sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
+    - script: |
+        ./azurePipeline/runDockerComposeTests.sh -p es$(dockertag)$(Build.BuildNumber) -t $(dockertag) -o $(resultFile) --type test
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '$(resultFile)'
+        testRunTitle: 'Publish integration test results'
+        failTaskOnFailedTests: true
 
-#- stage: stage_benchmark
-#  displayName: Benchmark
-#  dependsOn: 
-#  - stage_docker_image_build
-#  - stage_benchmark_image_build
-#  dependsOn: []
-#  jobs:
-#  - job: Benchmark
-#    timeoutInMinutes: 15
-#    variables:
-#      commandPrefix: docker-compose -f tools/docker-compose.yml -f tools/ci.yml --project-directory .
-#    displayName: Benchmarking
-#    pool:
-#      vmImage: 'ubuntu-16.04'
-#    steps:
-#    - script: |
-#        sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
-#    - script: |
-#        echo "Initialise the database"
-#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up db_init > /dev/null 2>&1
-#        echo "Start all the services and the becnmark."
-#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) up --abort-on-container-exit --exit-code-from benchmark db minio redis backend worker nginx benchmark
-#        echo "Retrive benchmark results." 
-#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) ps -q benchmark | xargs -I@ docker cp @:/app/results.json results.json
-#        echo "Cleaning."
-#        $(commandPrefix) -p es$(dockertag)$(Build.BuildNumber) down -v
-#      env:
-#        TAG: $(dockertag)
+- stage: stage_benchmark
+  displayName: Benchmark
+  dependsOn: 
+  - stage_docker_image_build
+  - stage_benchmark_image_build
+  jobs:
+  - job: Benchmark
+    timeoutInMinutes: 15
+    variables:
+      resultFile: results.json
+    displayName: Benchmarking
+    pool:
+      vmImage: 'ubuntu-16.04'
+    steps:
+    - script: |
+        sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
+    - script: |
+        ./azurePipeline/runDockerComposeTests.sh -p es$(dockertag)$(Build.BuildNumber) -t $(dockertag) -o $(resultFile) --type benchmark
     # Publish Pipeline Artifact
     # Publish a local directory or file as a named artifact for the current pipeline.
-#    - task: PublishPipelineArtifact@0
-#      inputs:
-#        artifactName: 'benchmark'
-#        targetPath: results.json
+    - task: PublishPipelineArtifact@0
+      inputs:
+        artifactName: 'benchmark'
+        targetPath: $(resultFile)
 
 - stage: stage_k8s_deployment
   displayName: Kubernetes deployment
-  dependsOn: []
+  dependsOn: [stage_docker_image_build]
   jobs:
   - job: job_k8s_deployment
     displayName: Kubernetes deployment and test
@@ -130,7 +110,7 @@ stages:
         echo $(DEPLOYMENT) | xargs -I@ echo "##vso[task.setvariable variable=DEPLOYMENT_NAME]@"
     # Preparing new variables, but built from the previous ones which is why they are in a separate step. I tried to bring them together, but they were not yet accessible to built these ones.
     - script: |
-        echo data61/anonlink-app:$(dockertag) | xargs -I@ echo "##vso[task.setvariable variable=IMAGE_NAME_WITH_TAG]@"
+        echo $(backendImageName):$(dockertag) | xargs -I@ echo "##vso[task.setvariable variable=IMAGE_NAME_WITH_TAG]@"
         echo $(dockertag)-tmppod | xargs -I@ echo "##vso[task.setvariable variable=POD_NAME]@"
     # Start the whole service using helm. We are currently lucky, the helm version on azure is compatible with the one on our cluster, but the latest version of helm is not (tested from my laptop).
     - script: |
