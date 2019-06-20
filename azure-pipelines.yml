@@ -50,7 +50,7 @@ stages:
     - script: |
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
     - script: |
-        ./azurePipeline/runDockerComposeTests.sh -p es$(dockertag)$(Build.BuildNumber) -t $(dockertag) -o $(resultFile) --type test
+        ./.azurePipeline/runDockerComposeTests.sh -p es$(dockertag)$(Build.BuildNumber) -t $(dockertag) -o $(resultFile) --type test
     - task: PublishTestResults@2
       condition: succeededOrFailed()
       inputs:
@@ -76,7 +76,7 @@ stages:
     - script: |
         sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
     - script: |
-        ./azurePipeline/runDockerComposeTests.sh -p es$(dockertag)$(Build.BuildNumber) -t $(dockertag) -o $(resultFile) --type benchmark
+        ./.azurePipeline/runDockerComposeTests.sh -p es$(dockertag)$(Build.BuildNumber) -t $(dockertag) -o $(resultFile) --type benchmark
     # Publish Pipeline Artifact
     # Publish a local directory or file as a named artifact for the current pipeline.
     - task: PublishPipelineArtifact@0
