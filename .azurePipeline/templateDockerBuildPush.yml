@@ -14,7 +14,7 @@ jobs:
     vmImage: "ubuntu-16.04"
 
   steps:
-  - template: templateDockerFromBranch.yml
+  - template: templateDockerTagFromBranch.yml
   - script: |
       docker login -u $(dockerHubId) -p $(dockerHubPassword)
   - script: |
