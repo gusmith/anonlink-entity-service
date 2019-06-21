@@ -18,8 +18,7 @@ jobs:
   - script: |
       docker login -u $(dockerHubId) -p $(dockerHubPassword)
   - script: |
-      echo $(DOCKER_TAG)
-      docker build -t ${{ parameters.imageName }}:$(dockertag) ${{ parameters.folder }}
+      docker build -t ${{ parameters.imageName }}:$(DOCKER_TAG) ${{ parameters.folder }}
       docker push ${{ parameters.imageName }}:$(DOCKER_TAG)
       
 # Updated from the documentation https://docs.microsoft.com/en-us/azure/devops/pipelines/process/templates?view=azure-devops
