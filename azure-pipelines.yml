@@ -49,7 +49,7 @@ stages:
     steps:
     - template: .azurePipeline/templateDockerTagFromBranch.yml
     - script: |
-        ./.azurePipeline/runDockerComposeTests.sh -p es$(DOCKER_TAG)$(Build.BuildNumber) -t $(DOCKER_TAG) -o $(resultFile) --type test
+        ./.azurePipeline/runDockerComposeTests.sh -p es$(DOCKER_TAG)$(Build.SourceVersion) -t $(DOCKER_TAG) -o $(resultFile) --type test
     - task: PublishTestResults@2
       condition: succeededOrFailed()
       inputs:
@@ -84,13 +84,13 @@ stages:
 
 - stage: stage_k8s_deployment
   displayName: Kubernetes deployment
-  dependsOn: [stage_docker_image_build, stage_integration_tests]
+#  dependsOn: [stage_docker_image_build, stage_integration_tests]
+  dependsOn: [stage_docker_image_build]
   jobs:
   - job: job_k8s_deployment
     displayName: Kubernetes deployment and test
     timeoutInMinutes: 40
     variables:
-     DEPLOYMENT: compose-project
      NAMESPACE: test-azure
     pool:
       vmImage: 'ubuntu-16.04'
@@ -102,6 +102,8 @@ stages:
         secureFile: awsClusterConfig
     # Prepare all the variables required during the scripts.
     - template: .azurePipeline/templateDockerTagFromBranch.yml
+    - script: |
+        echo "##vso[task.setvariable variable=DEPLOYMENT]deployment-$(DOCKER_TAG)"
     - script: |
         echo "##vso[task.setvariable variable=KUBECONFIGFILE]$(DownloadSecureFile.secureFilePath)"
         echo "##vso[task.setvariable variable=PVC]$(DEPLOYMENT)-test-results"
@@ -189,6 +191,12 @@ stages:
         
         echo "Delete the pvc"
         kubectl delete pvc -n=$(NAMESPACE) -l deployment=$(DEPLOYMENT)
+      condition: always()
+      env:
+        KUBECONFIG: $(KUBECONFIGFILE)
+    - script: |    
+        echo "Delete everything"
+        helm delete --purge $(DEPLOYMENT)
       condition: always()
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
