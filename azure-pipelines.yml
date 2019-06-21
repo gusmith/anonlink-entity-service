@@ -74,7 +74,7 @@ stages:
     steps:
     - template: .azurePipeline/templateDockerTagFromBranch.yml
     - script: |
-        ./.azurePipeline/runDockerComposeTests.sh -p es$(DOCKER_TAG)$(Build.BuildNumber) -t $(DOCKER_TAG) -o $(resultFile) --type benchmark
+        ./.azurePipeline/runDockerComposeTests.sh -p es$(DOCKER_TAG)$(Build.SourceVersion) -t $(DOCKER_TAG) -o $(resultFile) --type benchmark
     # Publish Pipeline Artifact
     # Publish a local directory or file as a named artifact for the current pipeline.
     - task: PublishPipelineArtifact@0
@@ -84,8 +84,7 @@ stages:
 
 - stage: stage_k8s_deployment
   displayName: Kubernetes deployment
-#  dependsOn: [stage_docker_image_build, stage_integration_tests]
-  dependsOn: [stage_docker_image_build]
+  dependsOn: [stage_docker_image_build, stage_integration_tests]
   jobs:
   - job: job_k8s_deployment
     displayName: Kubernetes deployment and test
@@ -103,7 +102,7 @@ stages:
     # Prepare all the variables required during the scripts.
     - template: .azurePipeline/templateDockerTagFromBranch.yml
     - script: |
-        echo "##vso[task.setvariable variable=DEPLOYMENT]deployment-$(DOCKER_TAG)"
+        echo "##vso[task.setvariable variable=DEPLOYMENT]deployment-$(DOCKER_TAG)$(Build.SourceVersion)"
     - script: |
         echo "##vso[task.setvariable variable=KUBECONFIGFILE]$(DownloadSecureFile.secureFilePath)"
         echo "##vso[task.setvariable variable=PVC]$(DEPLOYMENT)-test-results"
