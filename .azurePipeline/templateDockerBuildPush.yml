@@ -14,13 +14,13 @@ jobs:
     vmImage: "ubuntu-16.04"
 
   steps:
-  - script: |
-      sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
+  - template: .azurePipeline/templateDockerFromBranch.yml
   - script: |
       docker login -u $(dockerHubId) -p $(dockerHubPassword)
   - script: |
+      echo $(DOCKER_TAG)
       docker build -t ${{ parameters.imageName }}:$(dockertag) ${{ parameters.folder }}
-      docker push ${{ parameters.imageName }}:$(dockertag)
+      docker push ${{ parameters.imageName }}:$(DOCKER_TAG)
       
 # Updated from the documentation https://docs.microsoft.com/en-us/azure/devops/pipelines/process/templates?view=azure-devops
 # The idea being able to define jobs depending on the creation of the previous image.

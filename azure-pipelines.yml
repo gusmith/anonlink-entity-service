@@ -47,10 +47,10 @@ stages:
     pool:
       vmImage: 'ubuntu-16.04'
     steps:
+    - template: .azurePipeline/templateDockerFromBranch.yml
     - script: |
-        sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
-    - script: |
-        ./.azurePipeline/runDockerComposeTests.sh -p es$(dockertag)$(Build.BuildNumber) -t $(dockertag) -o $(resultFile) --type test
+        echo "The tag is $(DOCKER_TAG)"
+        ./.azurePipeline/runDockerComposeTests.sh -p es$(DOCKER_TAG)$(Build.BuildNumber) -t $(DOCKER_TAG) -o $(resultFile) --type test
     - task: PublishTestResults@2
       condition: succeededOrFailed()
       inputs:
@@ -73,10 +73,9 @@ stages:
     pool:
       vmImage: 'ubuntu-16.04'
     steps:
+    - template: .azurePipeline/templateDockerFromBranch.yml
     - script: |
-        sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
-    - script: |
-        ./.azurePipeline/runDockerComposeTests.sh -p es$(dockertag)$(Build.BuildNumber) -t $(dockertag) -o $(resultFile) --type benchmark
+        ./.azurePipeline/runDockerComposeTests.sh -p es$(DOCKER_TAG)$(Build.BuildNumber) -t $(DOCKER_TAG) -o $(resultFile) --type benchmark
     # Publish Pipeline Artifact
     # Publish a local directory or file as a named artifact for the current pipeline.
     - task: PublishPipelineArtifact@0
@@ -103,15 +102,12 @@ stages:
       inputs:
         secureFile: awsClusterConfig
     # Prepare all the variables required during the scripts.
+    - template: .azurePipeline/templateDockerFromBranch.yml
     - script: |
-        echo $(DownloadSecureFile.secureFilePath) | xargs -I@ echo "##vso[task.setvariable variable=KUBECONFIGFILE]@"
-        sourceBranch="$(Build.SourceBranch)"; echo ${sourceBranch##*/} | tr [:upper:] [:lower:] | tr -cd [a-z] | xargs -I@ echo "##vso[task.setvariable variable=dockertag]@"
-        echo $(DEPLOYMENT)-test-results | xargs -I@ echo "##vso[task.setvariable variable=PVC]@"
-        echo $(DEPLOYMENT) | xargs -I@ echo "##vso[task.setvariable variable=DEPLOYMENT_NAME]@"
-    # Preparing new variables, but built from the previous ones which is why they are in a separate step. I tried to bring them together, but they were not yet accessible to built these ones.
-    - script: |
-        echo $(backendImageName):$(dockertag) | xargs -I@ echo "##vso[task.setvariable variable=IMAGE_NAME_WITH_TAG]@"
-        echo $(dockertag)-tmppod | xargs -I@ echo "##vso[task.setvariable variable=POD_NAME]@"
+        echo "##vso[task.setvariable variable=KUBECONFIGFILE]$(DownloadSecureFile.secureFilePath)"
+        echo "##vso[task.setvariable variable=PVC]$(DEPLOYMENT)-test-results"
+        echo $(backendImageName):$(DOCKER_TAG) | xargs -I@ echo "##vso[task.setvariable variable=IMAGE_NAME_WITH_TAG]@"
+        echo $(DOCKER_TAG)-tmppod | xargs -I@ echo "##vso[task.setvariable variable=POD_NAME]@"
     # Start the whole service using helm. We are currently lucky, the helm version on azure is compatible with the one on our cluster, but the latest version of helm is not (tested from my laptop).
     - script: |
         echo "Start all the entity service pods"
@@ -124,29 +120,29 @@ stages:
                     --set api.app.debug=true \
                     --set global.postgresql.postgresqlPassword=notaproductionpassword \
                     --set api.ingress.enabled=false \
-                    --set api.www.image.tag=$(dockertag) \
-                    --set api.app.image.tag=$(dockertag) \
-                    --set api.dbinit.image.tag=$(dockertag) \
-                    --set workers.image.tag=$(dockertag)
+                    --set api.www.image.tag=$(DOCKER_TAG) \
+                    --set api.app.image.tag=$(DOCKER_TAG) \
+                    --set api.dbinit.image.tag=$(DOCKER_TAG) \
+                    --set workers.image.tag=$(DOCKER_TAG)
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
         echo "Create Persistent Volume Claim"
         cat .azurePipeline/k8s_test_pvc.yaml.tmpl | \
         sed 's|\$PVC'"|$(PVC)|g" | \
-        sed 's|\$DEPLOYMENT_NAME'"|$(DEPLOYMENT_NAME)|g" | \
+        sed 's|\$DEPLOYMENT_NAME'"|$(DEPLOYMENT)|g" | \
         kubectl apply -n=$(NAMESPACE) -f -
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
-        kubectl get services -n=$(NAMESPACE) -lapp=$(DEPLOYMENT_NAME)-entity-service -o jsonpath="{.items[0].spec.clusterIP}" | xargs -I@ echo "##vso[task.setvariable variable=SERVICE_IP]@"
+        kubectl get services -n=$(NAMESPACE) -lapp=$(DEPLOYMENT)-entity-service -o jsonpath="{.items[0].spec.clusterIP}" | xargs -I@ echo "##vso[task.setvariable variable=SERVICE_IP]@"
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
     - script: |
         echo "Start the test job"
         cat .azurePipeline/k8s_test_job.yaml.tmpl | \
         sed 's|\$PVC'"|$(PVC)|g" | \
-        sed 's|\$DEPLOYMENT_NAME'"|$(DEPLOYMENT_NAME)|g" | \
+        sed 's|\$DEPLOYMENT_NAME'"|$(DEPLOYMENT)|g" | \
         sed 's|\$IMAGE_NAME_WITH_TAG'"|$(IMAGE_NAME_WITH_TAG)|g" | \
         sed 's|\$SERVICE_IP'"|$(SERVICE_IP)|g" | \
         kubectl apply -n=$(NAMESPACE) -f -
@@ -158,7 +154,7 @@ stages:
         echo "Get the test results"
         cat .azurePipeline/k8s_get_results.yaml.tmpl | \
         sed 's|\$PVC'"|$(PVC)|g" | \
-        sed 's|\$DEPLOYMENT_NAME'"|$(DEPLOYMENT_NAME)|g" | \
+        sed 's|\$DEPLOYMENT_NAME'"|$(DEPLOYMENT)|g" | \
         sed 's|\$POD_NAME'"|$(POD_NAME)|g" | \
         kubectl apply -n=$(NAMESPACE) -f -
         kubectl wait -n=$(NAMESPACE) --timeout=120s --for=condition=Ready pods/$(POD_NAME)
@@ -177,7 +173,7 @@ stages:
         echo "Delete the test job"
         cat .azurePipeline/k8s_test_job.yaml.tmpl | \
         sed 's|\$PVC'"|$(PVC)|g" | \
-        sed 's|\$DEPLOYMENT_NAME'"|$(DEPLOYMENT_NAME)|g" | \
+        sed 's|\$DEPLOYMENT_NAME'"|$(DEPLOYMENT)|g" | \
         sed 's|\$IMAGE_NAME_WITH_TAG'"|$(IMAGE_NAME_WITH_TAG)|g" | \
         sed 's|\$SERVICE_IP'"|$(SERVICE_IP)|g" | \
         kubectl delete -n=$(NAMESPACE) -f -
@@ -188,12 +184,12 @@ stages:
         echo "Delete the temp pod"
         cat .azurePipeline/k8s_get_results.yaml.tmpl | \
         sed 's|\$PVC'"|$(PVC)|g" | \
-        sed 's|\$DEPLOYMENT_NAME'"|$(DEPLOYMENT_NAME)|g" | \
+        sed 's|\$DEPLOYMENT_NAME'"|$(DEPLOYMENT)|g" | \
         sed 's|\$POD_NAME'"|$(POD_NAME)|g" | \
         kubectl delete -n=$(NAMESPACE) -f -
         
         echo "Delete the pvc"
-        kubectl delete pvc -n=$(NAMESPACE) -l deployment=$(DEPLOYMENT_NAME)
+        kubectl delete pvc -n=$(NAMESPACE) -l deployment=$(DEPLOYMENT)
       condition: always()
       env:
         KUBECONFIG: $(KUBECONFIGFILE)
